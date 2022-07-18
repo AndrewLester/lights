@@ -1,5 +1,6 @@
 import { immerable, produce } from "immer";
 import { describe } from "vitest";
+import { col, vecAdd, vecMul } from "../utils/matrix";
 
 const directions = {
     up: { x: 0, y: -1 },
@@ -9,13 +10,18 @@ const directions = {
     none: { x: 0, y: 0 },
 };
 
+type Light = boolean;
+type ModeledLight = 0 | 1;
+
+export type GenerationType = "random" | "solveable" | "off";
+
 /**
  * Class storing game state and helper methods
  */
 export class GameState {
     [immerable] = true;
 
-    constructor(public size: number, public lights: boolean[][]) {}
+    constructor(public size: number, public lights: Light[][]) {}
 
     /**
      * Checks if a positon on the light array is in bounds
@@ -31,6 +37,7 @@ export class GameState {
      * Whether or not the game is solveable
      */
     get solveable(): boolean {
+        // If state belongs to orthogonal complement of null(E)
         return true;
     }
 
@@ -73,7 +80,7 @@ if (import.meta.vitest) {
  */
 export const createGame = (
     size: number,
-    generation: "random" | "solveable" | "off" = "off"
+    generation: GenerationType = "off"
 ) => {
     const random = generation === "random";
     const lights: boolean[][] = [];
@@ -85,7 +92,20 @@ export const createGame = (
     }
 
     if (generation === "solveable") {
-        // Compute col(A) and pick out random vector. Turn vector into matrix representation
+        const colSpace = col(computeAMatrix(size));
+        let solveable: number[] = [];
+        for (const col of colSpace) {
+            solveable = vecAdd(
+                vecMul(col, Math.random() > 0.5 ? 1 : 0),
+                solveable
+            );
+        }
+
+        for (let i = 0; i < solveable.length; i++) {
+            const row = Math.trunc(i / size);
+            const col = i % size;
+            lights[row][col] = !!solveable[i];
+        }
     }
 
     return new GameState(size, lights);
@@ -132,4 +152,36 @@ export const toggleLight = (state: GameState, index: number): GameState => {
             draft.lights[newRow][newCol] = !draft.lights[newRow][newCol];
         }
     });
+};
+
+const computeActionMatrix = (
+    size: number,
+    row: number,
+    col: number
+): ModeledLight[][] => {
+    const modeledLights: ModeledLight[][] = [];
+
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            if (modeledLights[i] === undefined) modeledLights[i] = [];
+            modeledLights[i][j] =
+                Math.abs(i - row) + Math.abs(j - col) <= 1 ? 1 : 0;
+        }
+    }
+
+    return modeledLights;
+};
+
+const computeAMatrix = (size: number): ModeledLight[][] => {
+    const modeledLights: ModeledLight[][] = [];
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            modeledLights[i * size + j] = computeActionMatrix(
+                size,
+                i,
+                j
+            ).flat();
+        }
+    }
+    return modeledLights;
 };
