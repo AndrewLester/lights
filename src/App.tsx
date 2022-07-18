@@ -7,6 +7,7 @@ function App() {
     const [size, setSize] = useState(5);
     const [generationType, setGenerationType] =
         useState<GenerationType>("solveable");
+    const [creating, setCreating] = useState(false);
     const [game, setGame] = useState(createGame(size, generationType));
 
     useEffect(() => {
@@ -14,7 +15,7 @@ function App() {
     }, [size, generationType]);
 
     const lightClicked = (index: number) => {
-        setGame(toggleLight(game, index));
+        setGame(toggleLight(game, index, !creating));
     };
 
     return (
@@ -36,6 +37,11 @@ function App() {
                 <option value="random">Random</option>
                 <option value="off">Off</option>
             </select>
+            <input
+                type="checkbox"
+                checked={creating}
+                onChange={(e) => setCreating(e.target.checked)}
+            />
             <div
                 className={styles.grid}
                 style={{ "--size": game.lights.length } as React.CSSProperties}

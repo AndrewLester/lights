@@ -104,7 +104,7 @@ export const createGame = (
         for (let i = 0; i < solveable.length; i++) {
             const row = Math.trunc(i / size);
             const col = i % size;
-            lights[row][col] = !!solveable[i];
+            lights[row][col] = !!(solveable[i] % 2);
         }
     }
 
@@ -129,6 +129,31 @@ if (import.meta.vitest) {
             }
             expect(true).toBe(false);
         });
+        it("creates solveable array", () => {
+            // https://web.archive.org/web/20100704161251/http://www.haar.clara.co.uk/Lights/solving.html
+            const validBottomRows = [
+                [true, false, false, false, true],
+                [false, true, false, true, false],
+                [true, true, true, false, false],
+                [false, false, true, true, true],
+                [true, false, true, true, false],
+                [false, true, true, false, true],
+                [true, true, false, true, true],
+                [false, false, false, false, false],
+            ];
+            for (let i = 0; i < 100; i++) {
+                const size = 5;
+                let game = createGame(size, "solveable");
+                for (let row = 1; row < size; row++) {
+                    for (let i = 0; i < size; i++) {
+                        if (game.lights[row - 1][i]) {
+                            game = toggleLight(game, size * row + i);
+                        }
+                    }
+                }
+                expect(validBottomRows).toContainEqual(game.lights[4]);
+            }
+        });
     });
 }
 
@@ -136,14 +161,21 @@ if (import.meta.vitest) {
  * Toggles a light at a given index
  * @param state GameState the game state
  * @param index number the light index to toggle
+ * @param adjacent boolean whether to update adjacent lights
  * @returns GameState the new game state
  */
-export const toggleLight = (state: GameState, index: number): GameState => {
+export const toggleLight = (
+    state: GameState,
+    index: number,
+    adjacent: boolean = true
+): GameState => {
     return produce(state, (draft) => {
         const row = Math.trunc(index / draft.size);
         const col = index % draft.size;
 
-        for (const direction of Object.values(directions)) {
+        const usedDirections = adjacent ? directions : { none: { x: 0, y: 0 } };
+
+        for (const direction of Object.values(usedDirections)) {
             const newRow = row + direction.y;
             const newCol = col + direction.x;
 
@@ -185,3 +217,22 @@ const computeAMatrix = (size: number): ModeledLight[][] => {
     }
     return modeledLights;
 };
+
+if (import.meta.vitest) {
+    const { it, expect, describe } = import.meta.vitest;
+    describe("computeAMatrix", () => {
+        it("outputs size 3 a matrix", () => {
+            expect(computeAMatrix(3)).toEqual([
+                [1, 1, 0, 1, 0, 0, 0, 0, 0],
+                [1, 1, 1, 0, 1, 0, 0, 0, 0],
+                [0, 1, 1, 0, 0, 1, 0, 0, 0],
+                [1, 0, 0, 1, 1, 0, 1, 0, 0],
+                [0, 1, 0, 1, 1, 1, 0, 1, 0],
+                [0, 0, 1, 0, 1, 1, 0, 0, 1],
+                [0, 0, 0, 1, 0, 0, 1, 1, 0],
+                [0, 0, 0, 0, 1, 0, 1, 1, 1],
+                [0, 0, 0, 0, 0, 1, 0, 1, 1],
+            ]);
+        });
+    });
+}
