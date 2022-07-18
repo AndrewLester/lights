@@ -64,6 +64,8 @@ export const vecAdd = (vec1: number[], vec2: number[]) => {
 };
 
 if (import.meta.vitest) {
+    const { it, expect, describe } = import.meta.vitest;
+
     describe("vecAdd", () => {
         it("adds two vectors", () => {
             expect(vecAdd([1, 2, 3], [3, 2, 1])).toEqual([4, 4, 4]);
@@ -76,6 +78,8 @@ export const vecMul = (vec: number[], factor: number) => {
 };
 
 if (import.meta.vitest) {
+    const { it, expect, describe } = import.meta.vitest;
+
     describe("vecMul", () => {
         it("multiplies a vector by a scalar", () => {
             expect(vecMul([1, 2, 3], 3)).toEqual([3, 6, 9]);
