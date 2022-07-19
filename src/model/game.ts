@@ -1,5 +1,7 @@
 import { immerable, produce } from "immer";
-import { col, vecAdd, vecMul } from "../utils/matrix";
+import { lsolve, multiply, usolve } from "mathjs";
+import { col, vecAdd, vecMul } from "../utils/alg";
+import Matrix, { BinaryField } from "../utils/matrix";
 
 const directions = {
     up: { x: 0, y: -1 },
@@ -36,8 +38,64 @@ export class GameState {
      * Whether or not the game is solveable
      */
     get solveable(): boolean {
-        // If state belongs to orthogonal complement of null(E)
-        return true;
+        return this.bestSolution !== undefined;
+    }
+
+    /**
+     * Returns the best solution
+     * form of number[]
+     */
+    get bestSolution(): number[] | null {
+        return this.solutions[0];
+    }
+
+    /**
+     * Solutions for the game
+     */
+    get solutions(): number[][] | [null] {
+        const aMatrix = computeAMatrix(this.size);
+
+        const eMatrix = new Matrix(
+            aMatrix.length,
+            aMatrix[0].length + 1,
+            new BinaryField(2)
+        );
+        const lightArray = this.lights.flat().map((val) => (val ? 1 : 0));
+
+        for (let i = 0; i < aMatrix.length; i++) {
+            for (let j = 0; j < aMatrix[0].length; j++) {
+                eMatrix.set(i, j, aMatrix[i][j]);
+            }
+            eMatrix.set(i, aMatrix.length, lightArray[i]);
+        }
+        eMatrix.reducedRowEchelonForm();
+
+        const lightMatrix = new Matrix(
+            lightArray.length,
+            1,
+            new BinaryField(2)
+        );
+        for (let i = 0; i < lightArray.length; i++) {
+            lightMatrix.set(i, 0, lightArray[i]);
+        }
+
+        // Is this solveable?
+        for (let row = 0; row < eMatrix.rowCount(); row++) {
+            let sum = 0;
+            for (let col = 0; col < eMatrix.columnCount() - 1; col++) {
+                sum += eMatrix.values[row][col];
+            }
+            if (sum === 0 && eMatrix.values[row][eMatrix.columnCount() - 1]) {
+                return [null];
+            }
+        }
+        console.log(eMatrix);
+        const solution: number[] = [];
+        for (let i = 0; i < this.size * this.size; i++) {
+            solution.push(eMatrix.get(i, this.size * this.size));
+        }
+
+        return [solution];
     }
 
     /**
@@ -68,6 +126,10 @@ if (import.meta.vitest) {
 
             state.lights[0] = [true, true];
             expect(state.off).toBe(false);
+        });
+        it("checks solutions", () => {
+            const state = new GameState(5, []);
+            state.solutions;
         });
     });
 }

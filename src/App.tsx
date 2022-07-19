@@ -8,10 +8,12 @@ function App() {
     const [generationType, setGenerationType] =
         useState<GenerationType>("solveable");
     const [creating, setCreating] = useState(false);
+    const [solution, setSolution] = useState<number[] | null>();
     const [game, setGame] = useState(createGame(size, generationType));
 
     useEffect(() => {
-        setGame(createGame(size, generationType));
+        const game = createGame(size, generationType);
+        setGame(game);
     }, [size, generationType]);
 
     const lightClicked = (index: number) => {
@@ -19,7 +21,7 @@ function App() {
         setGame(newState);
 
         if (newState.off && !creating && generationType !== "off") {
-            setTimeout(() => alert("You did it!"), 100);
+            setTimeout(() => alert("You did it!"), 500);
         }
     };
 
@@ -47,6 +49,14 @@ function App() {
                 checked={creating}
                 onChange={(e) => setCreating(e.target.checked)}
             />
+            <button onClick={() => setGame(createGame(size, generationType))}>
+                Generate
+            </button>
+            <button onClick={() => setSolution(game.bestSolution)}>
+                Solve
+            </button>
+            {solution && solution.join(",")}
+            {solution === null && "No solution"}
             <div
                 className={styles.grid}
                 style={{ "--size": game.lights.length } as React.CSSProperties}
