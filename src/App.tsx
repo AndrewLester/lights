@@ -15,7 +15,12 @@ function App() {
     }, [size, generationType]);
 
     const lightClicked = (index: number) => {
-        setGame(toggleLight(game, index, !creating));
+        const newState = toggleLight(game, index, !creating);
+        setGame(newState);
+
+        if (newState.off && !creating && generationType !== "off") {
+            alert("You did it!");
+        }
     };
 
     return (

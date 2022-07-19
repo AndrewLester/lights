@@ -1,10 +1,9 @@
 import rref from "rref";
-import { describe, expect, it } from "vitest";
 
 /**
  * Returns the column space of a matrix. Form: an array of columns
  * [
- *     ...col...
+ *     ...col...,
  *     ...col...
  * ]
  * @param matrix The matrix
