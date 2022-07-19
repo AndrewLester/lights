@@ -19,7 +19,7 @@ function App() {
         setGame(newState);
 
         if (newState.off && !creating && generationType !== "off") {
-            alert("You did it!");
+            setTimeout(() => alert("You did it!"), 100);
         }
     };
 
