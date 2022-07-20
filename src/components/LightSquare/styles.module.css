@@ -6,7 +6,7 @@
     border: 1px solid gray;
     appearance: none;
     cursor: pointer;
-    border-radius: 5px;
+    /* border-radius: 5px; */
     transition: all 200ms ease;
     -webkit-tap-highlight-color: transparent;
 }
@@ -21,15 +21,19 @@
     z-index: 10;
     top: 50%;
     left: 50%;
-    height: 102%;
-    width: 103%;
+    height: 115%;
+    width: 115%;
     border-radius: 10%;
     aspect-ratio: 1 / 1;
     transform: translate(-50%, -50%);
-    background: radial-gradient(circle at center, yellow 0, rgba(0 0 0 / 0%));
+    background: radial-gradient(
+        circle at center,
+        rgb(255, 225, 0) 0,
+        rgba(0 0 0 / 0%) 80%
+    );
     transition: all 250ms cubic-bezier(0.78, 0.12, 0.04, 1.24);
     pointer-events: none;
-    opacity: 0.5;
+    opacity: 0.85;
     mix-blend-mode: hard-light;
 }
 
@@ -47,7 +51,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: red;
+    color: rgba(0, 202, 202, 0.818);
     font-size: clamp(3rem, 5vw, 5rem);
     z-index: 2;
     font-family: monospace;

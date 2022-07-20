@@ -23,7 +23,7 @@ function App() {
         const newState = toggleLight(game, index, !creating);
         setGame(newState);
 
-        if (newState.off && !creating && generationType !== "off") {
+        if (newState.off && !creating) {
             setTimeout(() => alert("You did it!"), 500);
         }
     };
@@ -42,15 +42,17 @@ function App() {
 
     return (
         <main className={styles.main}>
-            <h1>Lights Out</h1>
+            <h1
+                className={game.off ? styles.solved : ""}
+                onClick={() => game.off && generate()}
+            >
+                Lights Out
+            </h1>
             <aside className={styles.settings}>
-                <details open={!asideHide}>
-                    <summary className={styles.summary}>
-                        Settings{" "}
-                        {game.off && generationType !== "off" && (
-                            <button onClick={generate}>Restart</button>
-                        )}
-                    </summary>
+                <details open={!asideHide} className={styles.details}>
+                    <summary className={styles.summary}>Settings</summary>
+                    {game.off && <button onClick={generate}>Restart</button>}
+                    <label htmlFor="size">Size</label>
                     <select
                         id="size"
                         value={size.toString()}
@@ -62,7 +64,7 @@ function App() {
                         <option value="6">6x6</option>
                         <option value="7">7x7</option>
                     </select>
-                    <label htmlFor="size">Size</label>
+                    <label htmlFor="generation-type">Generation</label>
                     <select
                         id="generation-type"
                         value={generationType}
@@ -72,23 +74,21 @@ function App() {
                     >
                         <option value="solveable">Solveable</option>
                         <option value="random">Random</option>
-                        <option value="off">Off</option>
                     </select>
-                    <label htmlFor="generation-type">Generation</label>
+                    <label htmlFor="creating">Setup</label>
                     <input
                         type="checkbox"
                         checked={creating}
                         id="creating"
                         onChange={(e) => setCreating(e.target.checked)}
                     />
-                    <label htmlFor="creating">Setup</label>
+                    <label htmlFor="show-solution">Show Solution</label>
                     <input
                         type="checkbox"
                         checked={showSolution}
                         id="show-solution"
                         onChange={handleShowSolution}
                     />
-                    <label htmlFor="show-solution">Show Solution</label>
                 </details>
             </aside>
             <div

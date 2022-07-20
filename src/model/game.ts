@@ -12,7 +12,7 @@ const directions = {
 type Light = boolean;
 type ModeledLight = 0 | 1;
 
-export type GenerationType = "random" | "solveable" | "off";
+export type GenerationType = "random" | "solveable";
 
 /**
  * Class storing game state and helper methods
@@ -121,10 +121,7 @@ if (import.meta.vitest) {
  * @param size number light array size
  * @returns GameState the game state
  */
-export const createGame = (
-    size: number,
-    generation: GenerationType = "off"
-) => {
+export const createGame = (size: number, generation: GenerationType) => {
     const random = generation === "random";
     const lights: boolean[][] = [];
     for (let i = 0; i < size; i++) {
@@ -157,10 +154,6 @@ export const createGame = (
 if (import.meta.vitest) {
     const { it, expect, describe } = import.meta.vitest;
     describe("createGame", () => {
-        it("creates all off array", () => {
-            const game = createGame(5);
-            expect(game.lights.flat().every((val) => val)).toBe(false);
-        });
         it("creates random array", () => {
             // Checks to see if a 5x5 game has some squares on. If it doesn't 20 times fail
             for (let i = 0; i < 20; i++) {
