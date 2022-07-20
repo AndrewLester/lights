@@ -19,9 +19,24 @@ function App() {
     const lightClicked = (index: number) => {
         const newState = toggleLight(game, index, !creating);
         setGame(newState);
+        setSolution(newState.bestSolution);
 
         if (newState.off && !creating && generationType !== "off") {
             setTimeout(() => alert("You did it!"), 500);
+        }
+    };
+
+    const generate = () => {
+        setGame(createGame(size, generationType));
+        setSolution(undefined);
+    };
+
+    const solve = () => {
+        const solution = game.bestSolution;
+        if (!solution) {
+            alert("Can't be solved");
+        } else {
+            setSolution(game.bestSolution);
         }
     };
 
@@ -49,14 +64,8 @@ function App() {
                 checked={creating}
                 onChange={(e) => setCreating(e.target.checked)}
             />
-            <button onClick={() => setGame(createGame(size, generationType))}>
-                Generate
-            </button>
-            <button onClick={() => setSolution(game.bestSolution)}>
-                Solve
-            </button>
-            {solution && solution.join(",")}
-            {solution === null && "No solution"}
+            <button onClick={generate}>Generate</button>
+            <button onClick={solve}>Solve</button>
             <div
                 className={styles.grid}
                 style={{ "--size": game.lights.length } as React.CSSProperties}
@@ -64,6 +73,7 @@ function App() {
                 {game.lights.flat().map((light, i) => (
                     <LightSquare
                         light={light}
+                        solution={solution ? !!solution[i] : false}
                         key={i}
                         onClick={() => lightClicked(i)}
                     />

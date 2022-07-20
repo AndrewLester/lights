@@ -1,7 +1,5 @@
 import { immerable, produce } from "immer";
-import { lsolve, multiply, usolve } from "mathjs";
-import { col, vecAdd, vecMul } from "../utils/alg";
-import Matrix, { BinaryField } from "../utils/matrix";
+import { col, rref, vecAdd, vecMul } from "../utils/alg";
 
 const directions = {
     up: { x: 0, y: -1 },
@@ -55,44 +53,28 @@ export class GameState {
     get solutions(): number[][] | [null] {
         const aMatrix = computeAMatrix(this.size);
 
-        const eMatrix = new Matrix(
-            aMatrix.length,
-            aMatrix[0].length + 1,
-            new BinaryField(2)
-        );
+        const eMatrix: number[][] = JSON.parse(JSON.stringify(aMatrix));
         const lightArray = this.lights.flat().map((val) => (val ? 1 : 0));
 
         for (let i = 0; i < aMatrix.length; i++) {
-            for (let j = 0; j < aMatrix[0].length; j++) {
-                eMatrix.set(i, j, aMatrix[i][j]);
-            }
-            eMatrix.set(i, aMatrix.length, lightArray[i]);
+            eMatrix[i].push(lightArray[i]);
         }
-        eMatrix.reducedRowEchelonForm();
-
-        const lightMatrix = new Matrix(
-            lightArray.length,
-            1,
-            new BinaryField(2)
-        );
-        for (let i = 0; i < lightArray.length; i++) {
-            lightMatrix.set(i, 0, lightArray[i]);
-        }
+        rref(eMatrix, 2);
 
         // Is this solveable?
-        for (let row = 0; row < eMatrix.rowCount(); row++) {
+        for (let row = 0; row < eMatrix.length; row++) {
             let sum = 0;
-            for (let col = 0; col < eMatrix.columnCount() - 1; col++) {
-                sum += eMatrix.values[row][col];
+            for (let col = 0; col < eMatrix[0].length - 1; col++) {
+                sum += eMatrix[row][col];
             }
-            if (sum === 0 && eMatrix.values[row][eMatrix.columnCount() - 1]) {
+            if (sum === 0 && eMatrix[row][eMatrix[0].length - 1]) {
                 return [null];
             }
         }
-        console.log(eMatrix);
+
         const solution: number[] = [];
         for (let i = 0; i < this.size * this.size; i++) {
-            solution.push(eMatrix.get(i, this.size * this.size));
+            solution.push(eMatrix[i][this.size * this.size]);
         }
 
         return [solution];
