@@ -10,6 +10,7 @@ function App() {
         useState<GenerationType>("solveable");
     const [creating, setCreating] = useState(false);
     const [showSolution, setShowSolution] = useState(false);
+    const [sound, setSound] = useState(true);
     const [game, setGame] = useState(createGame(size, generationType));
 
     const asideHide = useMediaQuery("(max-width: 800px)");
@@ -22,6 +23,10 @@ function App() {
     const lightClicked = (index: number) => {
         const newState = toggleLight(game, index, !creating);
         setGame(newState);
+
+        if (sound) {
+            new Audio("/switch.mp3").play();
+        }
 
         if (newState.off && !creating) {
             setTimeout(() => alert("You did it!"), 500);
@@ -52,6 +57,13 @@ function App() {
                 <details open={!asideHide} className={styles.details}>
                     <summary className={styles.summary}>Settings</summary>
                     {game.off && <button onClick={generate}>Restart</button>}
+                    <label htmlFor="sound">Sound</label>
+                    <input
+                        type="checkbox"
+                        id="sound"
+                        checked={sound}
+                        onChange={(e) => setSound(e.target.checked)}
+                    />
                     <label htmlFor="size">Size</label>
                     <select
                         id="size"
