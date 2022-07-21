@@ -166,8 +166,30 @@ if (import.meta.vitest) {
     });
 }
 
-export const vecAdd = (vec1: number[], vec2: number[]) => {
-    return vec1.map((val, i) => val + (vec2[i] ?? 0));
+/**
+ * Returns a list of values from the column of a matrix at a specific index
+ * @param matrix The matrix
+ * @param i The column idx
+ * @returns the column as an array
+ */
+export const getColumn = <T>(matrix: Matrix<T>, i: number): T[] => {
+    if (matrix.length === 0) return [];
+
+    const column: T[] = [];
+    for (let j = 0; j < matrix.length; j++) {
+        column.push(matrix[j][i]);
+    }
+    return column;
+};
+
+export const vecAdd = (vec1: number[], vec2: number[], primeField?: number) => {
+    return vec1.map((val, i) => {
+        let sum = val + (vec2[i] ?? 0);
+        if (primeField) {
+            sum %= primeField;
+        }
+        return sum;
+    });
 };
 
 if (import.meta.vitest) {

@@ -1,5 +1,5 @@
 import { immerable, produce } from "immer";
-import { col, rref, vecAdd, vecMul, Matrix } from "../utils/alg";
+import { col, rref, vecAdd, vecMul, Matrix, getColumn } from "../utils/alg";
 
 const directions = {
     up: { x: 0, y: -1 },
@@ -102,7 +102,58 @@ export class GameState {
             solution.push(eMatrix[i][this.size * this.size]);
         }
 
-        return [solution];
+        const basis: number[][] = [];
+
+        for (let col = 0; col < eMatrix[0].length; col++) {
+            let oneFound = false;
+            let nullS = false;
+            for (let row = 0; row < eMatrix.length; row++) {
+                if (eMatrix[row][col] === 1) {
+                    if (oneFound) {
+                        nullS = true;
+                        break;
+                    }
+
+                    oneFound = true;
+                }
+            }
+
+            if (nullS) {
+                for (let i = col; i < eMatrix[0].length - 1; i++) {
+                    // Null space addition
+                    const col = getColumn(eMatrix, i);
+                    col[i] = 1;
+                    basis.push(col);
+                }
+                break;
+            }
+        }
+
+        const solutions = [solution];
+
+        let permutations = 0b000000000000000;
+        while (permutations < Math.pow(2, basis.length)) {
+            const choices = basis.filter(
+                (_, i) => (permutations & (0b1 << i)) > 0
+            ) as number[][];
+            if (choices.length !== 0) {
+                let sum = solution;
+                for (const choice of choices) {
+                    sum = vecAdd(sum, choice, 2);
+                }
+                solutions.push(sum);
+            }
+
+            permutations++;
+        }
+
+        solutions.sort(
+            (a, b) =>
+                a.reduce((sum, cur) => sum + cur, 0) -
+                b.reduce((sum, cur) => sum + cur, 0)
+        );
+
+        return solutions;
     }
 
     /**

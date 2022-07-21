@@ -38,4 +38,11 @@ select {
 button {
     background-color: rgb(85, 85, 85);
     font-size: 1.5rem;
+    cursor: pointer;
+}
+
+button:disabled {
+    color: rgb(190, 190, 190);
+    background-color: rgb(60, 60, 60);
+    cursor: not-allowed;
 }

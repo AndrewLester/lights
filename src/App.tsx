@@ -14,7 +14,7 @@ function App() {
     const [generationType, setGenerationType] =
         useState<GenerationType>("solveable");
     const [creating, setCreating] = useState(false);
-    const [showSolution, setShowSolution] = useState(false);
+    const [showSolution, setShowSolution] = useState<number>();
     const [sound, setSound] = useState(true);
     const [game, setGame] = useState<GameState>();
 
@@ -63,7 +63,7 @@ function App() {
         if (!game!.bestSolution && e.target.checked) {
             alert("Can't be solved!");
         }
-        setShowSolution(e.target.checked);
+        setShowSolution(e.target.checked ? 0 : undefined);
     };
 
     const share = async () => {
@@ -126,10 +126,21 @@ function App() {
                     <label htmlFor="show-solution">Show Solution</label>
                     <input
                         type="checkbox"
-                        checked={showSolution}
+                        checked={showSolution !== undefined}
                         id="show-solution"
                         onChange={handleShowSolution}
                     />
+                    {showSolution !== undefined &&
+                        game?.bestSolution &&
+                        (game?.solutions as number[][]).map((_, i) => (
+                            <button
+                                key={i}
+                                onClick={() => setShowSolution(i)}
+                                disabled={i === showSolution}
+                            >
+                                Solution {i}
+                            </button>
+                        ))}
                     <button onClick={share}>Share</button>
                 </details>
             </aside>
@@ -141,8 +152,8 @@ function App() {
                     <LightSquare
                         light={light}
                         solution={
-                            showSolution && game.bestSolution
-                                ? !!game.bestSolution[i]
+                            showSolution !== undefined && game.bestSolution
+                                ? !!game.solutions[showSolution]![i]
                                 : false
                         }
                         key={i}
