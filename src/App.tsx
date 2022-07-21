@@ -25,7 +25,9 @@ function App() {
         setGame(newState);
 
         if (sound) {
-            new Audio(`${import.meta.env.VITE_BASE_URL}/switch.mp3`).play();
+            new Audio(
+                `${import.meta.env.VITE_BASE_URL ?? ""}/switch.mp3`
+            ).play();
         }
 
         if (newState.off && !creating) {
