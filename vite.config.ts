@@ -7,6 +7,7 @@ export default defineConfig({
     build: {
         outDir: "build",
     },
+    base: process.env.VITE_BASE_URL || undefined,
     define: {
         "import.meta.vitest": undefined,
     },
