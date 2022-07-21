@@ -51,7 +51,7 @@
 }
 
 .lightSquare.on:active::before {
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0.85);
 }
 
 .lightSquare.off:active {
