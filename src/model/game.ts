@@ -22,6 +22,31 @@ export class GameState {
 
     constructor(public size: number, public lights: Matrix<Light>) {}
 
+    static fromString(text: string): GameState | undefined {
+        const size = Math.sqrt(text.length);
+        if (size.toString().includes(".")) return;
+
+        const board = text.split("").map((val) => parseInt(val));
+        if (
+            board.length !== size * size ||
+            !board.every((val) => val === 1 || val === 0)
+        )
+            return;
+
+        const lights: Matrix<Light> = [];
+        for (let i = 0; i < size; i++) {
+            lights.push([]);
+        }
+
+        for (let i = 0; i < board.length; i++) {
+            const row = Math.trunc(i / size);
+            const col = i % size;
+            lights[row][col] = !!board[i];
+        }
+
+        return new GameState(size, lights);
+    }
+
     /**
      * Checks if a positon on the light array is in bounds
      * @param row number
@@ -86,11 +111,34 @@ export class GameState {
     get off(): boolean {
         return !this.lights.flat().some((val) => val);
     }
+
+    toString(): string {
+        return this.lights
+            .flat()
+            .map((val) => (val ? 1 : 0))
+            .join("");
+    }
 }
 
 if (import.meta.vitest) {
     const { it, expect, describe } = import.meta.vitest;
     describe("GameState", () => {
+        it("creates from string", () => {
+            const state = GameState.fromString("010101010");
+            expect(state).toBeDefined();
+            expect(state?.size).toBe(3);
+            expect(state?.lights).toEqual([
+                [false, true, false],
+                [true, false, true],
+                [false, true, false],
+            ]);
+
+            const undefinedState = GameState.fromString("01010101");
+            expect(undefinedState).toBeUndefined();
+
+            const undefinedState2 = GameState.fromString("021010010");
+            expect(undefinedState2).toBeUndefined();
+        });
         it("checks inBounds", () => {
             const state = new GameState(5, []);
             expect(state.inBounds(-1, 0)).toBe(false);
@@ -183,6 +231,14 @@ if (import.meta.vitest) {
 
             state.lights[0] = [true, true];
             expect(state.off).toBe(false);
+        });
+        it("creates a string", () => {
+            expect(
+                new GameState(5, [
+                    [true, false],
+                    [false, true],
+                ]).toString()
+            ).toEqual("1001");
         });
     });
 }

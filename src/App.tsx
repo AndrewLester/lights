@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import LightSquare from "./components/LightSquare/LightSquare";
-import { createGame, GenerationType, toggleLight } from "./model/game";
+import {
+    createGame,
+    GameState,
+    GenerationType,
+    toggleLight,
+} from "./model/game";
 import styles from "./styles.module.css";
 import { useMediaQuery } from "./utils/mediaQuery";
 
@@ -11,18 +16,31 @@ function App() {
     const [creating, setCreating] = useState(false);
     const [showSolution, setShowSolution] = useState(false);
     const [sound, setSound] = useState(true);
-    const [game, setGame] = useState(createGame(size, generationType));
+    const [game, setGame] = useState<GameState>();
 
     const asideHide = useMediaQuery("(max-width: 800px)");
 
     useEffect(() => {
-        const game = createGame(size, generationType);
-        setGame(game);
+        const { searchParams } = new URL(location.href);
+        if (searchParams.has("board")) {
+            const boardString = searchParams.get("board")!;
+            const game = GameState.fromString(boardString);
+            if (game) {
+                setGame(game);
+                return;
+            }
+        }
+
+        generate();
     }, [size, generationType]);
 
     const lightClicked = (index: number) => {
-        const newState = toggleLight(game, index, !creating);
+        const newState = toggleLight(game!, index, !creating);
         setGame(newState);
+
+        const url = new URL(location.href);
+        url.searchParams.delete("board");
+        history.pushState({}, "", url);
 
         if (sound) {
             new Audio(
@@ -41,24 +59,32 @@ function App() {
     };
 
     const handleShowSolution = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!game.bestSolution && e.target.checked) {
+        if (!game!.bestSolution && e.target.checked) {
             alert("Can't be solved!");
         }
         setShowSolution(e.target.checked);
     };
 
+    const share = async () => {
+        const url = new URL(location.href);
+        url.searchParams.set("board", game!.toString());
+        await navigator.clipboard.writeText(url.toString());
+        history.pushState({}, "", url);
+        alert("URL copied to clipboard.");
+    };
+
     return (
         <main className={styles.main}>
             <h1
-                className={game.off ? styles.solved : ""}
-                onClick={() => game.off && generate()}
+                className={game?.off ? styles.solved : ""}
+                onClick={() => game?.off && generate()}
             >
                 Lights Out
             </h1>
             <aside className={styles.settings}>
                 <details open={!asideHide} className={styles.details}>
                     <summary className={styles.summary}>Settings</summary>
-                    {game.off && <button onClick={generate}>Restart</button>}
+                    {game?.off && <button onClick={generate}>Restart</button>}
                     <label htmlFor="sound">Sound</label>
                     <input
                         type="checkbox"
@@ -103,13 +129,14 @@ function App() {
                         id="show-solution"
                         onChange={handleShowSolution}
                     />
+                    <button onClick={share}>Share</button>
                 </details>
             </aside>
             <div
                 className={styles.grid}
-                style={{ "--size": game.lights.length } as React.CSSProperties}
+                style={{ "--size": game?.lights.length } as React.CSSProperties}
             >
-                {game.lights.flat().map((light, i) => (
+                {game?.lights.flat().map((light, i) => (
                     <LightSquare
                         light={light}
                         solution={

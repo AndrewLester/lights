@@ -45,6 +45,7 @@ h1.solved {
     grid-area: aside;
     align-items: stretch;
     padding: 40px;
+    font-size: 1.5rem;
 }
 
 .summary {
@@ -72,7 +73,7 @@ h1.solved {
     transform: rotate(90deg);
 }
 
-.details > label {
+.details > :where(label, button) {
     margin-top: 15px;
 }
 
