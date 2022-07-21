@@ -95,6 +95,11 @@ h1.solved {
     outline-offset: -1px;
 }
 
+.github {
+    float: right;
+    margin-top: 30px;
+}
+
 @media (max-width: 800px) {
     .main {
         grid-template-areas: "header" "lights" "aside";
