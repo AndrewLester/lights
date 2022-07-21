@@ -27,6 +27,7 @@ function App() {
             const game = GameState.fromString(boardString);
             if (game) {
                 setGame(game);
+                setSize(game.size);
                 return;
             }
         }
