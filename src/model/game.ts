@@ -1,5 +1,5 @@
 import { immerable, produce } from "immer";
-import { col, rref, vecAdd, vecMul } from "../utils/alg";
+import { col, rref, vecAdd, vecMul, Matrix } from "../utils/alg";
 
 const directions = {
     up: { x: 0, y: -1 },
@@ -12,7 +12,7 @@ const directions = {
 type Light = boolean;
 type ModeledLight = 0 | 1;
 
-export type GenerationType = "random" | "solveable";
+export type GenerationType = "random" | "solveable" | "off";
 
 /**
  * Class storing game state and helper methods
@@ -20,7 +20,7 @@ export type GenerationType = "random" | "solveable";
 export class GameState {
     [immerable] = true;
 
-    constructor(public size: number, public lights: Light[][]) {}
+    constructor(public size: number, public lights: Matrix<Light>) {}
 
     /**
      * Checks if a positon on the light array is in bounds
@@ -36,7 +36,7 @@ export class GameState {
      * Whether or not the game is solveable
      */
     get solveable(): boolean {
-        return this.bestSolution !== undefined;
+        return this.bestSolution !== null;
     }
 
     /**
@@ -53,7 +53,7 @@ export class GameState {
     get solutions(): number[][] | [null] {
         const aMatrix = computeAMatrix(this.size);
 
-        const eMatrix: number[][] = JSON.parse(JSON.stringify(aMatrix));
+        const eMatrix: Matrix<number> = JSON.parse(JSON.stringify(aMatrix));
         const lightArray = this.lights.flat().map((val) => (val ? 1 : 0));
 
         for (let i = 0; i < aMatrix.length; i++) {
@@ -99,6 +99,81 @@ if (import.meta.vitest) {
             expect(state.inBounds(4, 5)).toBe(false);
             expect(state.inBounds(2, 3)).toBe(true);
         });
+        it("checks solveable", () => {
+            for (let i = 0; i < 100; i++) {
+                let state = createGame(5, "off");
+                for (let i = 0; i < 5 * 5; i++) {
+                    if (Math.random() > 0.5) {
+                        state = toggleLight(state, i);
+                    }
+                }
+                expect(state.solveable).toBe(true);
+            }
+
+            let unsolveableState = createGame(5, "off");
+            unsolveableState = toggleLight(unsolveableState, 0, false);
+            expect(unsolveableState.solveable).toBe(false);
+        });
+        it("best solution", () => {
+            let state = createGame(5, "off");
+            state = toggleLight(state, 12, false);
+            expect(state.bestSolution).toEqual(state.solutions[0]);
+
+            let unsolveableState = createGame(5, "off");
+            unsolveableState = toggleLight(unsolveableState, 0, false);
+            expect(unsolveableState.bestSolution).toBe(null);
+        });
+        it("checks solutions", () => {
+            const solutions = {
+                "true,false,false,false,true": [
+                    0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1,
+                    1, 1, 0, 0, 0,
+                ],
+                "false,true,false,true,false": [
+                    0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+                    1, 1, 1, 0, 0,
+                ],
+                "true,true,true,false,false": [
+                    0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0,
+                    0, 1, 1, 0, 0,
+                ],
+                "false,false,true,true,true": [
+                    0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1,
+                    0, 1, 0, 0, 0,
+                ],
+                "true,false,true,true,false": [
+                    0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0,
+                    1, 0, 0, 0, 0,
+                ],
+                "false,true,true,false,true": [
+                    0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1,
+                    1, 0, 1, 0, 0,
+                ],
+                "true,true,false,true,true": [
+                    0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
+                    0, 0, 1, 0, 0,
+                ],
+                "false,false,false,false,false": new Array(25).fill(0),
+            };
+
+            for (let i = 0; i < 100; i++) {
+                const size = 5;
+                let game = createGame(size, "solveable");
+                // Perform light chase
+                for (let row = 1; row < size; row++) {
+                    for (let i = 0; i < size; i++) {
+                        if (game.lights[row - 1][i]) {
+                            game = toggleLight(game, size * row + i);
+                        }
+                    }
+                }
+                expect(game.solutions).toEqual([
+                    solutions[
+                        game.lights[4].join(",") as keyof typeof solutions
+                    ],
+                ]);
+            }
+        });
         it("checks for off", () => {
             const state = new GameState(5, [[true, false]]);
             expect(state.off).toBe(false);
@@ -108,10 +183,6 @@ if (import.meta.vitest) {
 
             state.lights[0] = [true, true];
             expect(state.off).toBe(false);
-        });
-        it("checks solutions", () => {
-            const state = new GameState(5, []);
-            state.solutions;
         });
     });
 }
@@ -154,6 +225,11 @@ export const createGame = (size: number, generation: GenerationType) => {
 if (import.meta.vitest) {
     const { it, expect, describe } = import.meta.vitest;
     describe("createGame", () => {
+        it("creates off array", () => {
+            const game = createGame(5, "off");
+            expect(game).not.toBe(undefined);
+            expect(game.lights.flat().every((val) => !!val)).toBe(false);
+        });
         it("creates random array", () => {
             // Checks to see if a 5x5 game has some squares on. If it doesn't 20 times fail
             for (let i = 0; i < 20; i++) {
@@ -222,12 +298,77 @@ export const toggleLight = (
     });
 };
 
+if (import.meta.vitest) {
+    const { expect, describe, it } = import.meta.vitest;
+
+    describe("toggleLight", () => {
+        it("updates game state at correct index", () => {
+            let state = createGame(3, "off");
+            state = toggleLight(state, 0);
+            expect(state.lights.flat()).toEqual([
+                true,
+                true,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+            ]);
+
+            let middleState = createGame(3, "off");
+            middleState = toggleLight(middleState, 4);
+            expect(middleState.lights.flat()).toEqual([
+                false,
+                true,
+                false,
+                true,
+                true,
+                true,
+                false,
+                true,
+                false,
+            ]);
+        });
+        it("updates game state at correct index without adjacent", () => {
+            let state = createGame(3, "off");
+            state = toggleLight(state, 0, false);
+            expect(state.lights.flat()).toEqual([
+                true,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            ]);
+
+            let middleState = createGame(3, "off");
+            middleState = toggleLight(middleState, 4, false);
+            expect(middleState.lights.flat()).toEqual([
+                false,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+            ]);
+        });
+    });
+}
+
 const computeActionMatrix = (
     size: number,
     row: number,
     col: number
-): ModeledLight[][] => {
-    const modeledLights: ModeledLight[][] = [];
+): Matrix<ModeledLight> => {
+    const modeledLights: Matrix<ModeledLight> = [];
 
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
@@ -240,8 +381,28 @@ const computeActionMatrix = (
     return modeledLights;
 };
 
-const computeAMatrix = (size: number): ModeledLight[][] => {
-    const modeledLights: ModeledLight[][] = [];
+if (import.meta.vitest) {
+    const { it, expect, describe } = import.meta.vitest;
+    describe("computeActionMatrix", () => {
+        it("outputs size 3 action matrix for top left", () => {
+            expect(computeActionMatrix(3, 0, 0)).toEqual([
+                [1, 1, 0],
+                [1, 0, 0],
+                [0, 0, 0],
+            ]);
+        });
+        it("outputs size 3 action matrix for middle", () => {
+            expect(computeActionMatrix(3, 1, 1)).toEqual([
+                [0, 1, 0],
+                [1, 1, 1],
+                [0, 1, 0],
+            ]);
+        });
+    });
+}
+
+const computeAMatrix = (size: number): Matrix<ModeledLight> => {
+    const modeledLights: Matrix<ModeledLight> = [];
     for (let i = 0; i < size; i++) {
         for (let j = 0; j < size; j++) {
             modeledLights[i * size + j] = computeActionMatrix(

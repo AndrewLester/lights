@@ -1,13 +1,12 @@
+export type Matrix<T> = T[][];
+
 /**
  * Computes a matrix's row reduced echelon form over a prime field or all real numbers
  * Algorithm from: https://jeremykun.com/2011/12/30/row-reduction-over-a-field/
  * @param matrix A matrix
  * @param primeField The primefield (undefined or 2)
  */
-export const rref = (matrix: number[][], primeField?: number): void => {
-    if (primeField && primeField !== 2)
-        throw new Error("Not implemented for prime field !== 2");
-
+export const rref = (matrix: Matrix<number>, primeField?: 2): void => {
     const rows = matrix.length;
     const cols = matrix[0].length;
 
@@ -70,6 +69,45 @@ export const rref = (matrix: number[][], primeField?: number): void => {
     }
 };
 
+if (import.meta.vitest) {
+    const { it, expect, describe } = import.meta.vitest;
+    describe("rref", () => {
+        it("rref of identity", () => {
+            const identity = [
+                [1, 0],
+                [0, 1],
+            ];
+            const rrefOfIdentity = JSON.parse(JSON.stringify(identity));
+            rref(rrefOfIdentity);
+            expect(rrefOfIdentity).toEqual(identity);
+        });
+        it("rref of larger matrix", () => {
+            const start = [
+                [1, 2, 3],
+                [3, 2, 1],
+                [2, 1, 3],
+            ];
+            rref(start);
+            expect(JSON.parse(JSON.stringify(start))).toEqual([
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+            ]);
+        });
+        it("rref of small matrix over field 2", () => {
+            const start = [
+                [1, 1],
+                [1, 1],
+            ];
+            rref(start, 2);
+            expect(JSON.parse(JSON.stringify(start))).toEqual([
+                [1, 1],
+                [0, 0],
+            ]);
+        });
+    });
+}
+
 /**
  * Returns the column space of a matrix. Form: an array of columns
  * [
@@ -77,13 +115,13 @@ export const rref = (matrix: number[][], primeField?: number): void => {
  *     ...col...
  * ]
  * @param matrix The matrix
- * @returns number[][] The column space
+ * @returns Matrix<number> The column space
  */
-export const col = (matrix: number[][]): number[][] => {
+export const col = (matrix: Matrix<number>): Matrix<number> => {
     const cloned = JSON.parse(JSON.stringify(matrix));
     rref(cloned);
 
-    const cols: number[][] = [];
+    const cols: Matrix<number> = [];
     for (let col = 0; col < cloned[0].length; col++) {
         const nums = [];
         let nonzero = 0;
