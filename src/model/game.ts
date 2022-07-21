@@ -266,11 +266,12 @@ if (import.meta.vitest) {
                         }
                     }
                 }
-                expect(game.solutions).toEqual([
+
+                expect(game.solutions).toContainEqual(
                     solutions[
                         game.lights[4].join(",") as keyof typeof solutions
-                    ],
-                ]);
+                    ]
+                );
             }
         });
         it("checks for off", () => {
