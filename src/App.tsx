@@ -31,7 +31,9 @@ function App() {
                 return;
             }
         }
-
+        if (showSolution !== undefined) {
+            setShowSolution(undefined);
+        }
         generate();
     }, [size, generationType]);
 
