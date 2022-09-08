@@ -42,8 +42,10 @@ function App() {
         setGame(newState);
 
         const url = new URL(location.href);
-        url.searchParams.delete("board");
-        history.pushState({}, "", url);
+        if (url.searchParams.has("board")) {
+            history.pushState({}, "", url);
+            url.searchParams.delete("board");
+        }
 
         if (sound) {
             new Audio(
